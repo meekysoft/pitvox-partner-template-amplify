@@ -1,3 +1,5 @@
+import { DriverDashboard } from '@pitvox/partner-react'
+import '@pitvox/partner-react/styles.css'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Dashboard() {
@@ -5,19 +7,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <section className="flex items-center gap-4">
-        {user?.avatarUrl && (
-          <img
-            src={user.avatarUrl}
-            alt={user.displayName}
-            className="w-16 h-16 rounded-full border-2 border-gray-700"
-          />
-        )}
-        <div>
-          <h1 className="text-3xl font-bold">Welcome, {user?.displayName}</h1>
-          <p className="text-gray-400 text-sm">Steam ID: {user?.steamId}</p>
-        </div>
-      </section>
+      <DriverDashboard
+        steamId={user?.steamId}
+        avatarUrl={user?.avatarUrl}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
