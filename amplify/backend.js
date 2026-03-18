@@ -2,6 +2,7 @@ import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource.js';
 import { steamAuth } from './functions/steam-auth/resource.js';
 import { preTokenGeneration } from './functions/pre-token-generation/resource.js';
+import { competitionProxy } from './functions/competition-proxy/resource.js';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { FunctionUrlAuthType } from 'aws-cdk-lib/aws-lambda';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
@@ -12,6 +13,7 @@ const backend = defineBackend({
   auth,
   steamAuth,
   preTokenGeneration,
+  competitionProxy,
 });
 
 // =============================================================================
@@ -141,11 +143,29 @@ const steamAuthUrl = backend.steamAuth.resources.lambda.addFunctionUrl({
 });
 
 // =============================================================================
+// Competition Proxy Configuration
+// =============================================================================
+
+// Pass Cognito config so the Lambda can verify access tokens
+backend.competitionProxy.addEnvironment(
+  'COGNITO_USER_POOL_ID',
+  backend.auth.resources.userPool.userPoolId
+);
+
+// Create public URL for competition proxy Lambda
+// (registration requests go through this to keep the partner API key server-side;
+//  the Lambda validates the Cognito access token before proxying)
+const competitionProxyUrl = backend.competitionProxy.resources.lambda.addFunctionUrl({
+  authType: FunctionUrlAuthType.NONE,
+});
+
+// =============================================================================
 // Outputs
 // =============================================================================
 
 backend.addOutput({
   custom: {
     steamAuthUrl: steamAuthUrl.url,
+    competitionProxyUrl: competitionProxyUrl.url,
   },
 });

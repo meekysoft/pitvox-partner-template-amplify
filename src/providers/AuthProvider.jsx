@@ -181,6 +181,19 @@ export function AuthProvider({ children }) {
     return null
   }, [])
 
+  // Get the current access token (for authenticated API calls)
+  const getAccessToken = useCallback(() => {
+    const stored = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!stored) return null
+    try {
+      const tokens = JSON.parse(stored)
+      if (tokens.expiresAt && Date.now() >= tokens.expiresAt - 5 * 60 * 1000) return null
+      return tokens.accessToken || null
+    } catch {
+      return null
+    }
+  }, [])
+
   const value = {
     user,
     isLoading,
@@ -190,6 +203,7 @@ export function AuthProvider({ children }) {
     getSteamAuthUrl,
     setSteamTokens,
     refreshAuth: checkAuth,
+    getAccessToken,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
