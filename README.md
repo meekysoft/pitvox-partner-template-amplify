@@ -45,7 +45,6 @@ rm -rf .git && git init
 
 ```bash
 npm install
-cd amplify && npm install && cd ..
 ```
 
 ### 3. Configure your partner slug
