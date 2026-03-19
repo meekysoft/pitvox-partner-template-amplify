@@ -16,21 +16,19 @@ export function request(ctx) {
     return { error: 'Could not determine Steam ID from token' }
   }
 
-  const params = new URLSearchParams()
-  params.set('steamId', steamId)
-  if (ctx.args.limit) params.set('limit', ctx.args.limit)
-  if (ctx.args.offset) params.set('offset', ctx.args.offset)
-  if (ctx.args.unreadOnly) params.set('unread_only', 'true')
-
-  const qs = params.toString()
+  const query = { steamId }
+  if (ctx.args.limit) query.limit = `${ctx.args.limit}`
+  if (ctx.args.offset) query.offset = `${ctx.args.offset}`
+  if (ctx.args.unreadOnly) query.unread_only = 'true'
 
   return {
     method: 'GET',
-    resourcePath: `/api/v1/notifications?${qs}`,
+    resourcePath: '/api/v1/notifications',
     params: {
       headers: {
         'X-Partner-Key': ctx.env.PARTNER_API_KEY,
       },
+      query,
     },
   }
 }

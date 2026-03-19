@@ -17,11 +17,12 @@ export function request(ctx) {
 
   return {
     method: 'PATCH',
-    resourcePath: `/api/v1/notifications/read-all?steamId=${steamId}`,
+    resourcePath: '/api/v1/notifications/read-all',
     params: {
       headers: {
         'X-Partner-Key': ctx.env.PARTNER_API_KEY,
       },
+      query: { steamId },
     },
   }
 }
