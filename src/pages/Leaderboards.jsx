@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   useLeaderboardIndex,
@@ -24,7 +24,24 @@ export default function Leaderboards() {
   const trackParam = searchParams.get('track')
   const carParam = searchParams.get('car')
   const driverParam = searchParams.get('driver')
+  const tagsParam = searchParams.get('tags')
   const showInvalid = searchParams.get('invalid') === 'true'
+
+  // Tag filter — persisted in URL so it survives drill-down navigation
+  const activeTags = useMemo(() => {
+    if (!tagsParam) return new Set()
+    return new Set(tagsParam.split(',').filter(Boolean))
+  }, [tagsParam])
+
+  const handleTagChange = useCallback((newTags) => {
+    const params = Object.fromEntries(searchParams.entries())
+    if (newTags.size > 0) {
+      params.tags = [...newTags].join(',')
+    } else {
+      delete params.tags
+    }
+    setSearchParams(params)
+  }, [searchParams, setSearchParams])
 
   // Data
   const {
@@ -56,8 +73,11 @@ export default function Leaderboards() {
     { carId: carParam, game: gameParam, gameVersion: effectiveVersion }
   )
 
-  // Navigation
-  function nav(params) { setSearchParams(params) }
+  // Navigation — tags are preserved across drill-down
+  function nav(params) {
+    if (tagsParam) params.tags = tagsParam
+    setSearchParams(params)
+  }
 
   function handleGameChange(game) { nav({ game }) }
 
@@ -141,6 +161,8 @@ export default function Leaderboards() {
           getUserDisplay={getUserDisplay}
           onCarSelect={handleCarSelect}
           onNavigate={handleBreadcrumbNavigate}
+          tags={activeTags}
+          onTagChange={handleTagChange}
         />
       )
     }
@@ -151,6 +173,8 @@ export default function Leaderboards() {
         carMetadata={carMetadata}
         getUserDisplay={getUserDisplay}
         onTrackSelect={handleTrackSelect}
+        tags={activeTags}
+        onTagChange={handleTagChange}
       />
     )
   }
