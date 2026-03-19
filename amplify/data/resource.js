@@ -20,6 +20,23 @@ const schema = a.schema({
     error: a.string(),
   }),
 
+  // ── Queries ────────────────────────────────────────────────────
+  // AppSync requires at least one query. This also serves as a
+  // handy health-check endpoint for the API.
+
+  /**
+   * Simple ping query — returns true if the API is reachable.
+   */
+  ping: a
+    .query()
+    .returns(a.boolean())
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        entry: './resolvers/ping.js',
+      })
+    ),
+
   // ── Competition registration mutations ──────────────────────────
 
   /**

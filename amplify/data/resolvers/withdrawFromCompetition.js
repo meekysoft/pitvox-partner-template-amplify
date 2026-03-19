@@ -13,7 +13,7 @@ export function request(ctx) {
   }
 
   if (!steamId) {
-    runtime.earlyReturn({ success: false, error: 'Could not determine Steam ID from token' })
+    return { error: 'Could not determine Steam ID from token' }
   }
 
   return {
