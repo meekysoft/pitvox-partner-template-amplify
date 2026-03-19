@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { PitVoxPartnerProvider } from '@pitvox/partner-react'
+import { generateClient } from 'aws-amplify/api'
 import { AuthProvider } from './providers/AuthProvider'
 import Layout from './components/Layout.jsx'
 import Home from './pages/Home.jsx'
@@ -12,76 +13,76 @@ import { AuthError } from './pages/auth/Error.jsx'
 import { ProtectedRoute } from './components/ProtectedRoute.jsx'
 import { useAuth } from './hooks/useAuth.js'
 
-/**
- * Get the competition proxy Lambda URL from Amplify outputs.
- */
-function getProxyUrl() {
-  return window.amplifyOutputs?.custom?.competitionProxyUrl || null
-}
+const client = generateClient()
 
 function AppRoutes() {
-  const { user, getAccessToken } = useAuth()
+  const { user } = useAuth()
 
   // ──────────────────────────────────────────────────────────────
   // Competition registration callbacks (power mode).
-  // These proxy through the competition-proxy Lambda so the
-  // partner API key stays server-side. The Lambda validates the
-  // Cognito access token and enforces that users can only
-  // register/withdraw themselves.
+  // These call AppSync mutations that proxy to pitvox-api via
+  // HTTP data source resolvers. The partner API key stays
+  // server-side, and the user's Steam ID is extracted from the
+  // Cognito token — not from client input.
   // ──────────────────────────────────────────────────────────────
   const handleRegister = useCallback(async (competitionId, driverData) => {
-    const proxyUrl = getProxyUrl()
-    if (!proxyUrl) throw new Error('Competition proxy URL not found in Amplify outputs')
+    const { data, errors } = await client.graphql({
+      query: /* GraphQL */ `
+        mutation RegisterForCompetition(
+          $competitionId: String!
+          $displayName: String!
+          $avatarUrl: String
+          $discordUsername: String
+          $experience: String
+          $comments: String
+        ) {
+          registerForCompetition(
+            competitionId: $competitionId
+            displayName: $displayName
+            avatarUrl: $avatarUrl
+            discordUsername: $discordUsername
+            experience: $experience
+            comments: $comments
+          ) {
+            success
+            id
+            error
+          }
+        }
+      `,
+      variables: {
+        competitionId,
+        displayName: user?.displayName || 'Unknown',
+        avatarUrl: user?.avatarUrl || undefined,
+        ...driverData,
+      },
+    })
 
-    const accessToken = getAccessToken()
-    if (!accessToken) throw new Error('Not authenticated')
+    if (errors?.length) throw new Error(errors[0].message)
+    const result = data?.registerForCompetition
+    if (!result?.success) throw new Error(result?.error || 'Registration failed')
+    return result
+  }, [user])
 
-    const res = await fetch(
-      `${proxyUrl}?action=register&competitionId=${encodeURIComponent(competitionId)}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          display_name: user?.displayName || 'Unknown',
-          avatar_url: user?.avatarUrl || undefined,
-          ...driverData,
-        }),
-      }
-    )
+  const handleWithdraw = useCallback(async (competitionId) => {
+    const { data, errors } = await client.graphql({
+      query: /* GraphQL */ `
+        mutation WithdrawFromCompetition($competitionId: String!) {
+          withdrawFromCompetition(competitionId: $competitionId) {
+            success
+            id
+            error
+          }
+        }
+      `,
+      variables: { competitionId },
+    })
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.error || `Registration failed (${res.status})`)
-    }
-
-    return res.json()
-  }, [user, getAccessToken])
-
-  const handleWithdraw = useCallback(async (competitionId, steamId) => {
-    const proxyUrl = getProxyUrl()
-    if (!proxyUrl) throw new Error('Competition proxy URL not found in Amplify outputs')
-
-    const accessToken = getAccessToken()
-    if (!accessToken) throw new Error('Not authenticated')
-
-    const res = await fetch(
-      `${proxyUrl}?action=withdraw&competitionId=${encodeURIComponent(competitionId)}&steamId=${encodeURIComponent(steamId)}`,
-      {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}` },
-      }
-    )
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.error || `Withdrawal failed (${res.status})`)
-    }
-
-    return res.json()
-  }, [getAccessToken])
+    if (errors?.length) throw new Error(errors[0].message)
+    const result = data?.withdrawFromCompetition
+    if (!result?.success) throw new Error(result?.error || 'Withdrawal failed')
+    return result
+  }, [])
 
   return (
     // ──────────────────────────────────────────────────────────────

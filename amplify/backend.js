@@ -1,8 +1,8 @@
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource.js';
+import { data } from './data/resource.js';
 import { steamAuth } from './functions/steam-auth/resource.js';
 import { preTokenGeneration } from './functions/pre-token-generation/resource.js';
-import { competitionProxy } from './functions/competition-proxy/resource.js';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { FunctionUrlAuthType } from 'aws-cdk-lib/aws-lambda';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
@@ -11,9 +11,9 @@ import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 
 const backend = defineBackend({
   auth,
+  data,
   steamAuth,
   preTokenGeneration,
-  competitionProxy,
 });
 
 // =============================================================================
@@ -143,21 +143,26 @@ const steamAuthUrl = backend.steamAuth.resources.lambda.addFunctionUrl({
 });
 
 // =============================================================================
-// Competition Proxy Configuration
+// AppSync HTTP Data Source for PitVox API
 // =============================================================================
 
-// Pass Cognito config so the Lambda can verify access tokens
-backend.competitionProxy.addEnvironment(
-  'COGNITO_USER_POOL_ID',
-  backend.auth.resources.userPool.userPoolId
-);
+// Add HTTP data source — resolvers proxy registration requests to pitvox-api
+// with the partner API key, eliminating Lambda cold starts.
+const pitvoxApiUrl = process.env.PITVOX_API_URL || 'https://api.pitvox.com';
+backend.data.addHttpDataSource('PitvoxApiDataSource', pitvoxApiUrl);
 
-// Create public URL for competition proxy Lambda
-// (registration requests go through this to keep the partner API key server-side;
-//  the Lambda validates the Cognito access token before proxying)
-const competitionProxyUrl = backend.competitionProxy.resources.lambda.addFunctionUrl({
-  authType: FunctionUrlAuthType.NONE,
-});
+// Pass partner API key to AppSync resolvers (accessed via ctx.env.PARTNER_API_KEY)
+// ──────────────────────────────────────────────────────────────────────────────
+// TODO: For sandbox, export the secret before starting:
+//   export PARTNER_API_KEY=$(npx ampx sandbox secret get PARTNER_API_KEY --quiet)
+//   npx ampx sandbox
+//
+// For production, set PARTNER_API_KEY in your Amplify console environment variables.
+// ──────────────────────────────────────────────────────────────────────────────
+const cfnGraphqlApi = backend.data.resources.cfnResources.cfnGraphqlApi;
+cfnGraphqlApi.environmentVariables = {
+  PARTNER_API_KEY: process.env.PARTNER_API_KEY || '',
+};
 
 // =============================================================================
 // Outputs
@@ -166,6 +171,5 @@ const competitionProxyUrl = backend.competitionProxy.resources.lambda.addFunctio
 backend.addOutput({
   custom: {
     steamAuthUrl: steamAuthUrl.url,
-    competitionProxyUrl: competitionProxyUrl.url,
   },
 });
