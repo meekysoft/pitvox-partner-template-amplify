@@ -20,6 +20,31 @@ const schema = a.schema({
     error: a.string(),
   }),
 
+  Notification: a.customType({
+    id: a.string().required(),
+    type: a.string().required(),
+    title: a.string().required(),
+    message: a.string(),
+    isRead: a.boolean().required(),
+    createdAt: a.string().required(),
+    readAt: a.string(),
+    trackId: a.string(),
+    trackLayout: a.string(),
+    carId: a.string(),
+    game: a.string(),
+    data: a.json(),
+  }),
+
+  NotificationsResponse: a.customType({
+    notifications: a.ref('Notification').required().array().required(),
+    unreadCount: a.integer().required(),
+  }),
+
+  MarkReadResponse: a.customType({
+    success: a.boolean().required(),
+    error: a.string(),
+  }),
+
   // ── Queries ────────────────────────────────────────────────────
   // AppSync requires at least one query. This also serves as a
   // handy health-check endpoint for the API.
@@ -34,6 +59,58 @@ const schema = a.schema({
     .handler(
       a.handler.custom({
         entry: './resolvers/ping.js',
+      })
+    ),
+
+  // ── Notification queries ───────────────────────────────────────
+
+  /**
+   * Fetch notifications for the authenticated user.
+   */
+  getNotifications: a
+    .query()
+    .arguments({
+      limit: a.integer(),
+      offset: a.integer(),
+      unreadOnly: a.boolean(),
+    })
+    .returns(a.ref('NotificationsResponse'))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: 'PitvoxApiDataSource',
+        entry: './resolvers/getNotifications.js',
+      })
+    ),
+
+  /**
+   * Mark a single notification as read.
+   */
+  markNotificationRead: a
+    .mutation()
+    .arguments({
+      notificationId: a.string().required(),
+    })
+    .returns(a.ref('MarkReadResponse'))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: 'PitvoxApiDataSource',
+        entry: './resolvers/markNotificationRead.js',
+      })
+    ),
+
+  /**
+   * Mark all notifications as read.
+   */
+  markAllNotificationsRead: a
+    .mutation()
+    .returns(a.ref('MarkReadResponse'))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: 'PitvoxApiDataSource',
+        entry: './resolvers/markAllNotificationsRead.js',
       })
     ),
 
