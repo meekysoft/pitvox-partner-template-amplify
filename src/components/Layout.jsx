@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useUnreadCount } from '@pitvox/partner-react'
 import { useAuth } from '../hooks/useAuth'
 
 const publicLinks = [
@@ -27,6 +28,7 @@ function NavItem({ to, label }) {
 
 export default function Layout() {
   const { isAuthenticated, isLoading, user, signOut, getSteamAuthUrl } = useAuth()
+  const { count: unreadCount } = useUnreadCount()
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-gray-100">
@@ -43,7 +45,23 @@ export default function Layout() {
 
               {!isLoading && isAuthenticated && (
                 <>
-                  <NavItem to="/dashboard" label="Dashboard" />
+                  <NavLink
+                    to="/dashboard"
+                    className={({ isActive }) =>
+                      `relative px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      }`
+                    }
+                  >
+                    Dashboard
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 flex items-center justify-center px-1 rounded-full bg-rose-500 text-white text-xs font-bold">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </NavLink>
                   <button
                     onClick={signOut}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"

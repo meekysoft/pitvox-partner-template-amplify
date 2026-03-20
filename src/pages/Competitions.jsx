@@ -308,6 +308,7 @@ function CompetitionRegistrationView({ competitionId, onBack, onBackToList }) {
       <RegistrationPanel
         competitionId={competitionId}
         registration={config.registration}
+        onWithdrawSuccess={onBackToList}
       />
     </>
   )
