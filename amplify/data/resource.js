@@ -45,6 +45,13 @@ const schema = a.schema({
     error: a.string(),
   }),
 
+  ServerInfoResponse: a.customType({
+    success: a.boolean().required(),
+    serverAddress: a.string(),
+    serverPassword: a.string(),
+    error: a.string(),
+  }),
+
   // ── Queries ────────────────────────────────────────────────────
   // AppSync requires at least one query. This also serves as a
   // handy health-check endpoint for the API.
@@ -111,6 +118,27 @@ const schema = a.schema({
       a.handler.custom({
         dataSource: 'PitvoxApiDataSource',
         entry: './resolvers/markAllNotificationsRead.js',
+      })
+    ),
+
+  // ── Server info query ───────────────────────────────────────────
+
+  /**
+   * Get server info (address + password) for a competition.
+   * Only returns data if the authenticated user is registered.
+   */
+  getServerPassword: a
+    .query()
+    .arguments({
+      competitionId: a.string().required(),
+      roundNumber: a.integer(),
+    })
+    .returns(a.ref('ServerInfoResponse'))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: 'PitvoxApiDataSource',
+        entry: './resolvers/getServerPassword.js',
       })
     ),
 
