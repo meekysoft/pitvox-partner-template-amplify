@@ -140,6 +140,28 @@ function AppRoutes() {
     if (!result?.success) throw new Error(result?.error || 'Failed to mark notification as read')
   }, [])
 
+  const handleFetchServerPassword = useCallback(async (competitionId, roundNumber) => {
+    const variables = { competitionId }
+    if (roundNumber != null) variables.roundNumber = roundNumber
+
+    const { data, errors } = await client.graphql({
+      query: /* GraphQL */ `
+        query GetServerPassword($competitionId: String!, $roundNumber: Int) {
+          getServerPassword(competitionId: $competitionId, roundNumber: $roundNumber) {
+            success
+            serverAddress
+            serverPassword
+            error
+          }
+        }
+      `,
+      variables,
+    })
+
+    if (errors?.length) throw new Error(errors[0].message)
+    return data?.getServerPassword
+  }, [])
+
   const handleMarkAllNotificationsRead = useCallback(async () => {
     const { data, errors } = await client.graphql({
       query: /* GraphQL */ `
@@ -167,6 +189,7 @@ function AppRoutes() {
       getSteamId={() => user?.steamId || null}
       onRegister={handleRegister}
       onWithdraw={handleWithdraw}
+      onFetchServerPassword={handleFetchServerPassword}
       onFetchNotifications={handleFetchNotifications}
       onMarkNotificationRead={handleMarkNotificationRead}
       onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
