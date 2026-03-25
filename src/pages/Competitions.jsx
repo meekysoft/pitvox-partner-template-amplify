@@ -4,7 +4,7 @@ import {
   useCompetitions,
   useCompetitionConfig,
   useCompetitionAllRounds,
-  CompetitionCards,
+  CompetitionCard,
   StandingsTable,
   RoundSessionResults,
   RegistrationPanel,
@@ -52,12 +52,22 @@ export default function Competitions() {
             </div>
           )}
         </div>
-        <CompetitionCards
-          competitions={competitions}
-          isLoading={loadingList}
-          onSelect={handleSelectCompetition}
-          onRegister={handleRegisterCompetition}
-        />
+        {loadingList ? (
+          <CompLoadingState message="Loading competitions..." />
+        ) : !competitions?.length ? (
+          <CompEmptyState message="No competitions available." />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {competitions.map((comp) => (
+              <CompetitionCard
+                key={comp.id}
+                comp={comp}
+                onSelect={handleSelectCompetition}
+                onRegister={handleRegisterCompetition}
+              />
+            ))}
+          </div>
+        )}
       </div>
     )
   }
