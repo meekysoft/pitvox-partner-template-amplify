@@ -57,7 +57,11 @@ export default function Competitions() {
         ) : !competitions?.length ? (
           <CompEmptyState message="No competitions available." />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid gap-6 ${
+            competitions.length === 1 ? 'max-w-2xl mx-auto' :
+            competitions.length === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+            'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+          }`}>
             {competitions.map((comp) => (
               <CompetitionCard
                 key={comp.id}
