@@ -67,15 +67,23 @@ npx ampx sandbox secret set STEAM_API_KEY
 # Paste your key when prompted
 ```
 
-### 5. Set your admin Steam ID (optional)
+### 5. Set your PitVox Partner API key
 
-To grant yourself admin access, set your Steam ID before starting the sandbox:
+Your partner API key authenticates requests to the PitVox API. You can find it in your [PitVox partner dashboard](https://pitvox.com/partner/manage). Set it as an environment variable before starting the sandbox:
+
+```bash
+export PARTNER_API_KEY="your-partner-api-key"
+```
+
+### 6. Set your admin Steam IDs (optional)
+
+Users whose Steam IDs are listed here will be added to the Cognito `admins` group on sign-in. The template doesn't include admin-specific UI out of the box, but the group is available for you to build admin features on top of (e.g. content management, moderation tools).
 
 ```bash
 export ADMIN_STEAM_IDS="76561198012345678"
 ```
 
-### 6. Start the Amplify sandbox
+### 7. Start the Amplify sandbox
 
 ```bash
 npx ampx sandbox
@@ -83,7 +91,7 @@ npx ampx sandbox
 
 This deploys the backend (Cognito, Lambda, DynamoDB) to your AWS account and generates `amplify_outputs.json`. First run takes a few minutes.
 
-### 7. Start the frontend
+### 8. Start the frontend
 
 In a separate terminal:
 
@@ -91,7 +99,7 @@ In a separate terminal:
 npm run dev
 ```
 
-### 8. Customise
+### 9. Customise
 
 - **Site name** — update `index.html` title, `Layout.jsx` navbar, and `Home.jsx` heading
 - **Branding** — replace `public/favicon.svg` with your logo
@@ -115,8 +123,9 @@ npm run dev
 3. Click **"New app"** → **"Host web app"** → connect your repo
 4. Amplify auto-detects the framework and deploys both frontend and backend
 5. Set environment variables in the Amplify console:
+   - `PARTNER_API_KEY` — your PitVox partner API key
    - `SITE_URL` — your production URL (e.g. `https://my-community.com`)
-   - `ADMIN_STEAM_IDS` — comma-separated admin Steam IDs
+   - `ADMIN_STEAM_IDS` — comma-separated admin Steam IDs (optional, for custom admin features)
 6. Set the Steam API key secret:
    ```bash
    npx ampx sandbox secret set STEAM_API_KEY --branch main
