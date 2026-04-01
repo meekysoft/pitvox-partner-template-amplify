@@ -24,10 +24,19 @@ Uses the [`@pitvox/partner-react`](https://github.com/meekysoft/pitvox-partner-r
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 18+
+- [Node.js](https://nodejs.org/) **22.x** (see important note below)
 - An [AWS account](https://aws.amazon.com/) with Amplify access
 - A [Steam Web API key](https://steamcommunity.com/dev/apikey)
 - Your PitVox partner slug (from your PitVox partner dashboard)
+
+> **Important: Node version must match Amplify CI.** Amplify's build environment uses Node 22 with npm 10. If you generate `package-lock.json` with a different Node/npm version (e.g. Node 24 with npm 11), your production deployments will fail with `npm ci` errors about mismatched lock files. Use [nvm](https://github.com/nvm-sh/nvm) to ensure you're running Node 22:
+>
+> ```bash
+> nvm install 22
+> nvm use 22
+> ```
+>
+> If your production build fails with `Missing: ... from lock file`, delete `package-lock.json`, switch to Node 22, and run `npm install` to regenerate it.
 
 ## Getting started
 
@@ -41,9 +50,10 @@ cd my-community
 rm -rf .git && git init
 ```
 
-### 2. Install dependencies
+### 2. Install dependencies (use Node 22)
 
 ```bash
+nvm use 22    # ensure correct Node version
 npm install
 ```
 
