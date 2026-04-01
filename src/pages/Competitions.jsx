@@ -3,14 +3,11 @@ import { useSearchParams } from 'react-router-dom'
 import {
   useCompetitions,
   useCompetitionConfig,
-  useCompetitionAllRounds,
   CompetitionCard,
-  StandingsTable,
-  RoundSessionResults,
+  CompetitionResultsTabs,
   RegistrationPanel,
   TypeBadge,
   InfoPill,
-  PODIUM_MEDALS,
   CompLoadingState,
   CompEmptyState,
 } from '@pitvox/partner-react'
@@ -110,16 +107,7 @@ export default function Competitions() {
 function CompetitionResultsView({ competitionId, onBack, onRegister }) {
   const { data: config, isLoading: configLoading } = useCompetitionConfig(competitionId)
 
-  const isChampionship = config?.type === 'championship'
-  const finalizedRounds = config?.rounds?.filter((r) => r.isFinalized) || []
-  const roundNumbers = finalizedRounds.map((r) => r.roundNumber)
-
-  const { data: rounds = [], isLoading: roundsLoading } = useCompetitionAllRounds(
-    competitionId,
-    roundNumbers,
-  )
-
-  if (configLoading || roundsLoading) {
+  if (configLoading) {
     return <CompLoadingState message="Loading competition..." />
   }
 
@@ -135,9 +123,6 @@ function CompetitionResultsView({ competitionId, onBack, onRegister }) {
       </div>
     )
   }
-
-  const hasStandings = isChampionship
-  const hasRounds = rounds.length > 0
 
   return (
     <>
@@ -166,36 +151,7 @@ function CompetitionResultsView({ competitionId, onBack, onRegister }) {
         )}
       </div>
 
-      {!hasStandings && !hasRounds ? (
-        <div className="pvx-empty">
-          <p>No results available yet.</p>
-          <p className="pvx-comp-empty-sub">Results will appear here once rounds are finalised.</p>
-        </div>
-      ) : (
-        <>
-          {/* Championship Standings */}
-          {hasStandings && (
-            <StandingsTable competitionId={competitionId} />
-          )}
-
-          {/* Round Results — Accordion */}
-          {hasRounds && (
-            <div className="pvx-card">
-              <div className="pvx-card-header">
-                <h3 className="pvx-card-title">Round Results</h3>
-              </div>
-              <div className="pvx-comp-accordion">
-                {rounds.map((round) => (
-                  <RoundAccordionItem
-                    key={round.roundNumber}
-                    round={round}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      <CompetitionResultsTabs competitionId={competitionId} />
     </>
   )
 }
@@ -226,62 +182,6 @@ function RegistrationCTA({ config, onRegister }) {
         <span className="pvx-comp-card-reg-btn pvx-comp-card-reg-btn--closed">
           {isFull ? 'Full' : 'Registration Closed'}
         </span>
-      )}
-    </div>
-  )
-}
-
-// ─── Round Accordion ────────────────────────────────────────────
-
-function RoundAccordionItem({ round }) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const raceSession = round.sessions?.find((s) => s.type === 'RACE')
-  const podium = raceSession?.results?.filter((r) => r.position <= 3).sort((a, b) => a.position - b.position)
-
-  return (
-    <div className={`pvx-accordion-item ${isOpen ? 'pvx-accordion-item--open' : ''}`}>
-      <button
-        className="pvx-accordion-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-      >
-        <div className="pvx-accordion-toggle-content">
-          <div className="pvx-accordion-toggle-title">
-            <span className="pvx-accordion-round-label">
-              Round {round.roundNumber}: {round.track || 'TBC'}
-            </span>
-            {round.startTime && (
-              <span className="pvx-accordion-round-date">
-                {new Date(round.startTime).toLocaleDateString('en-GB', {
-                  day: 'numeric', month: 'long', year: 'numeric',
-                })}
-              </span>
-            )}
-          </div>
-          {podium?.length > 0 && (
-            <div className="pvx-accordion-podium">
-              {podium.map((r) => (
-                <span key={r.driverId} className="pvx-round-podium-item">
-                  <span>{PODIUM_MEDALS[r.position - 1]}</span>
-                  <span>{r.driverName}</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        <svg
-          className={`pvx-accordion-chevron ${isOpen ? 'pvx-accordion-chevron--open' : ''}`}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </button>
-      {isOpen && (
-        <div className="pvx-accordion-content">
-          <RoundSessionResults round={round} />
-        </div>
       )}
     </div>
   )
