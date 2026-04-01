@@ -29,14 +29,12 @@ Uses the [`@pitvox/partner-react`](https://github.com/meekysoft/pitvox-partner-r
 - A [Steam Web API key](https://steamcommunity.com/dev/apikey)
 - Your PitVox partner slug (from your PitVox partner dashboard)
 
-> **Important: Node version must match Amplify CI.** This template includes an `.nvmrc` file that pins Node 22, matching the Amplify build environment. Always use [nvm](https://github.com/nvm-sh/nvm) to ensure the correct version:
+> **Important: Use Node 22.** This template includes an `.nvmrc` file that pins Node 22, matching the Amplify build environment. Always use [nvm](https://github.com/nvm-sh/nvm) to ensure the correct version:
 >
 > ```bash
 > nvm install 22   # first time only
 > nvm use          # reads .nvmrc automatically
 > ```
->
-> If you generate `package-lock.json` with a different Node/npm version (e.g. Node 24 with npm 11), production deployments will fail with `npm ci` errors about mismatched lock files. Fix: delete `package-lock.json`, run `nvm use`, then `npm install` to regenerate it.
 
 ## Getting started
 
